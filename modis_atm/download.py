@@ -1,5 +1,5 @@
 import re
-import os.path
+import posixpath
 import datetime
 
 from earthdata_download import EarthdataAPI
@@ -8,10 +8,10 @@ short_names = ["MOD05_L2", "MOD04_3K", "MOD07_L2"]
 
 
 def date_from_fname_ydoy(fname):
-    fname = os.path.basename(fname)
+    fname = posixpath.basename(fname)
     try:
-        datestr = re.search('\.A(\d{5})\.').group(1)
-        return datetime.datetime.strptime(datestr, '%Y%j').strftime('%Y%m%d')
+        datestr = re.search('\.A(\d{7}\.\d{4})\.', fname).group(1)
+        return datetime.datetime.strptime(datestr, '%Y%j.%H%M')
     except AttributeError:
         raise ValueError(
                 'Unable to get date from file name \'{}\'.'.format(fname))
