@@ -11,4 +11,4 @@ setup(
     install_requires=[
         'earthdata_download>=0.5'],
     dependency_links=[
-        'https://github.com/DHI-GRAS/earthdata_download/archive/v0.5.zip#egg=earthdata_download-0.5'])
+        'https://github.com/DHI-GRAS/earthdata_download/archive/v0.6.zip#egg=earthdata_download-0.6'])
