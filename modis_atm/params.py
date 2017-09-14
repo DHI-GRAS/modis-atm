@@ -24,13 +24,6 @@ else:
     C_daac2disk = os.path.join(wd, "dependency", "Daac2Disk_linux")
 
 
-def check_gdal_success(outfile, cmd):
-    """Make sure GDAL command `cmd` succeeded in creating `outfile`"""
-    if not os.path.isfile(outfile):
-        raise RuntimeError('GDAL command \'{}\' did not produce the '
-                'expected output file {}.'.format(cmd, outfile))
-
-
 def reprojectModisSwath(inFilename, outFilename, projectionString):
     """Reproject MODIS swath"""
     tempFilename = os.path.join(os.path.dirname(outFilename), 'temp.tif')
