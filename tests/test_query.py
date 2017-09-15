@@ -1,6 +1,6 @@
 import datetime
 
-from modis_atm import download
+from modis_atm import query
 
 
 _date_extent = dict(
@@ -14,14 +14,14 @@ _query_kw = dict(
 
 
 def test_retrieve_entries():
-    entries = download.retrieve_entries(**_query_kw)
+    entries = query.retrieve_entries(**_query_kw)
     assert len(entries) > 0
     e = entries[0]
     assert 'footprint' in e
 
 
 def test_retrieve_entries_all_short_names():
-    entries = download.retrieve_entries_all_short_names(
+    entries = query.retrieve_entries_all_short_names(
             also_myd=True,
             **_date_extent)
     some_short_name = 'MOD05_L2'

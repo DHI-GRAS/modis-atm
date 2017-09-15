@@ -1,33 +1,54 @@
 import datetime
+import logging
 
 import shapely.geometry
+import numpy as np
 
 from modis_atm import overpass_filter
-from modis_atm import download
+from modis_atm import query
 
+logging.basicConfig(level='DEBUG')
+
+_extent = dict(xmin=10, xmax=13, ymin=54, ymax=56)
 
 _date_extent = dict(
             date=datetime.datetime(2016, 1, 1),
-            extent=dict(xmin=10, xmax=13, ymin=54, ymax=56))
+            extent=_extent)
 
-_aoi_geom = shapely.geometry.box(10, 54, 13, 56)
+_aoi_geom = shapely.geometry.box(*[_extent[k] for k in ['xmin', 'ymin', 'xmax', 'ymax']])
 
 
 def test_overpass_value():
+    entries = query.retrieve_entries(short_name='MOD05_L2', **_date_extent)
 
-    reference_date = datetime.datetime(2016, 1, 1)
-
+    target_date = datetime.datetime(2016, 1, 1)
     aoi_geom = _aoi_geom
     aoi_area = aoi_geom.area
 
-    entries = download.retrieve_entries(**_date_extent)
-    e = entries[0]
+    values = np.zeros(len(entries))
+    for i, e in enumerate(entries):
+        value = overpass_filter.overpass_value(
+                fp=e['footprint'],
+                date=e['start_date'],
+                aoi_geom_wgs=aoi_geom,
+                aoi_area=aoi_area,
+                target_date=target_date,
+                max_diff_hours=48)
+        values[i] = value
+    assert np.all((values >= 0) & (values <= 1))
 
-    value = overpass_filter.overpass_value(
-            fp=e['footprint'],
-            date=e['start_date'],
+
+def test_rank_overpasses():
+
+    entries = query.retrieve_entries(short_name='MOD05_L2', **_date_extent)
+
+    target_date = datetime.datetime(2016, 1, 1)
+    aoi_geom = _aoi_geom
+
+    values, entries = overpass_filter.rank_overpasses(
+            parsed_entries=entries,
             aoi_geom_wgs=aoi_geom,
-            aoi_area=aoi_area,
-            reference_date=reference_date,
+            target_date=target_date,
             max_diff_hours=48)
-    assert 0 < value < 1
+    assert len(values) == len(entries)
+    assert values[0] > values[-1]

@@ -208,63 +208,6 @@ def estimateAtmParametersMODIS(fileImg,  modisAtmDir, extent = None,  yearDoy = 
 
 def downloadAtmParametersMODIS(imagePath, metadataPath, sensor):
     # Get overpass time from metadata
-    if sensor == "WV2" or sensor == "WV3":
-        firstLineTimeRegex = "\s*firstLineTime\s*=\s*(\d{4})[-_](\d{2})[-_](\d{2})T(\d{2}):(\d{2}):(.*)Z;"
-        earliestAcqTimeRegex = "\s*earliestAcqTime\s*=\s*(\d{4})[-_](\d{2})[-_](\d{2})T(\d{2}):(\d{2}):(.*)Z;"
-        with open(metadataPath, 'r') as metadata:
-            for line in metadata:
-                 match = re.match(firstLineTimeRegex, line)
-                 if not match:
-                     match = re.match(earliestAcqTimeRegex, line)
-                 if match:
-                     year = int(match.group(1))
-                     month = int(match.group(2))
-                     day = int(match.group(3))
-                     UT = float(match.group(4)) + float(match.group(5))/60 + float(match.group(6))/3600
-    if sensor == "L8" or sensor == "L7":
-        DATEACQUIREDRegex = "\s*DATE_ACQUIRED\s*=\s*(\d{4})[-_](\d{2})[-_](\d{2})"
-        SCENECENTERTIMERegex = "\s*SCENE_CENTER_TIME\s*=\s*\"?(\d{2}):(\d{2}):(.*)Z\"?"
-        with open(metadataPath, 'r') as metadata:
-            for line in metadata:
-                 match = re.match(DATEACQUIREDRegex, line)
-                 if match:
-                     year = int(match.group(1))
-                     month = int(match.group(2))
-                     day = int(match.group(3))
-        with open(metadataPath, 'r') as metadata:
-            for line in metadata:
-                 match = re.match(SCENECENTERTIMERegex, line)
-                 if match:
-                     UT = float(match.group(1)) + float(match.group(2))/60 + float(match.group(3))/3600
-    if sensor == "PHR1A" or sensor == "PHR1B" or sensor == "SPOT6":
-        tree = ET.parse(metadataPath)
-        # get down to the appropirate node
-        root = tree.getroot()
-        Geometric_Data = root.findall('Geometric_Data')[0]
-        Use_Area = Geometric_Data.findall('Use_Area')[0]
-        for LGV in Use_Area.findall('Located_Geometric_Values'):
-            # get angles for centre of the image
-            if LGV.findall('LOCATION_TYPE')[0].text == "Center":
-                # get year month and day
-                timeStr = LGV.findall('TIME')[0].text
-                dateRegex = '(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.*'
-                match = re.match(dateRegex, timeStr)
-                if match:
-                    year = int(match.group(1))
-                    month = int(match.group(2))
-                    day = int(match.group(3))
-                    UT = float(match.group(4)) + float(match.group(5))/60 + float(match.group(6))/3600
-                break
-    if sensor == "S2A_10m" or sensor == "S2A_60m":
-        dateTimeStr = metadataPath['product_start']
-        match = re.match('(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.*', dateTimeStr)
-        if match:
-            year = int(match.group(1))
-            month = int(match.group(2))
-            day = int(match.group(3))
-            UT = float(match.group(4)) + float(match.group(5))/60 + float(match.group(6))/3600
-
-    date = datetime.date(year, month, day)
 
     #######################################################
     # Get ROI as the image extent in geographic coordinates
@@ -299,45 +242,3 @@ def downloadAtmParametersMODIS(imagePath, metadataPath, sensor):
         proc.communicate(input="y")
 
     return downloadDir
-
-
-# Clean up
-def deleteDownloadedModisFiles(downloadDir):
-    modisList = glob.glob(os.path.join(downloadDir, "MOD") + "*.hdf")
-    for modisFile in modisList:
-        try:
-            os.remove(modisFile)
-        except:
-            print "could not remove downloaded modisfile: ", modisFile
-
-
-# Prepare daac2disk command to donwload MODIS products
-def prepareDaac2DiskCommand(shortname, version, extent, startDate, endDate, downloadDir):
-
-    cmd = ""
-
-    # Get MODIS product short name from the select option
-    cmd = cmd + "--shortname "+shortname+" --versionid "+version+" "
-
-    # Get cooridantes in daac2disk order (xmin, ymin, xmax, ymax) from LL and UR pixels
-    if extent:
-        cmd = cmd + "--bbox "+str(extent[0][0])+" "+str(extent[0][1])+" "+str(extent[1][0])+" "+str(extent[1][1])+" "
-
-    # Parse start and end dates and convert to format expected by daac2disk
-    startDate = str(startDate.year)+"-"+str(startDate.month).zfill(2)+"-"+str(startDate.day).zfill(2)
-    cmd = cmd + "--begin "+startDate+" "
-    endDate = str(endDate.year)+"-"+str(endDate.month).zfill(2)+"-"+str(endDate.day).zfill(2)
-    cmd = cmd + "--end "+endDate+" "
-
-    # Other settings
-    cmd = cmd + "--nometadata "
-
-    # Set output directory
-    cmd = cmd + "--output \""+downloadDir+"\" "
-
-    # A workaround to automatically say "yes" when asked if files should be downloaded
-    #cmd = cmd + "< y.txt"
-
-    cmd = C_daac2disk +" "+ cmd
-
-    return cmd
