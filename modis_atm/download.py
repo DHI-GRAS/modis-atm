@@ -1,16 +1,29 @@
 import logging
 
-import shapely.geometry
 from earthdata_download import download as eddownload
-
-from modis_atm import overpass_filter
-from modis_atm import query
 
 logger = logging.getLogger(__name__)
 
+EXTENSIONS = ['.hdf', '.zip', '.nc4', '.nc']
+
+
+def _get_https_data_url(urls, extensions=EXTENSIONS):
+    """Find URL that starts with https and ends with a data file extension"""
+    for url in urls:
+        url_lower = url.lower()
+        if url_lower.startswith('https'):
+            for ext in extensions:
+                if url_lower.endswith(ext):
+                    return url
+    raise ValueError('No https data URL found among URLs {}'.format(urls))
+
 
 def download_entries(entries, download_dir, credentials):
-    urls = [e['urls'][0] for e in entries]
+    urls = []
+    for e in entries:
+        url = _get_https_data_url(e['urls'])
+        urls.append(url)
+
     local_files = []
     for url in urls:
         local_file = eddownload.download_data(
@@ -19,24 +32,3 @@ def download_entries(entries, download_dir, credentials):
                 **credentials)
         local_files.append(local_file)
     return local_files
-
-
-def find_and_download_data(date, extent, credentials, download_dir):
-
-    aoi_geom_wgs = shapely.geometry.box(
-            *[extent[k] for k in ['xmin', 'ymin', 'xmax', 'ymax']])
-
-    param_names_entries = query.retrieve_entries_all_parameters(date, extent, also_myd=True)
-
-    for param_name in param_names_entries:
-        entries = param_names_entries[param_name]
-
-        values, entries = overpass_filter.rank_overpasses(
-                entries,
-                aoi_geom_wgs,
-                target_date=date,
-                max_diff_hours=48)
-
-        best_entry = entries[0]
-        best_value = values[0]
-        logger.info('Best entry has value %f', best_value)

@@ -6,7 +6,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def _average_dates(date1, date2):
+def _average_datetime(date1, date2):
     dt = date2 - date1
     date = date1 + dt / 2
     return date
@@ -15,10 +15,10 @@ def _average_dates(date1, date2):
 def group_entries_by_date(parsed_entries):
     date_groups = defaultdict(list)
     for e in parsed_entries:
-        date = _average_dates(
-                e['start_date'].date(),
-                e['end_date'].date())
-        date_groups[date] = e
+        date = _average_datetime(
+                e['start_date'],
+                e['end_date'])
+        date_groups[date].append(e)
     return date_groups
 
 
@@ -53,35 +53,9 @@ def _value_overlap(footprint_geom, aoi_geom):
     return intersectionpct
 
 
-def _combined_value(date_value, overlap_value):
-    pass
-
-
-def overpass_value(
-        footprint_geom, date, aoi_geom,
-        target_date, max_diff_hours):
-    """Compute value for overpass
-
-    Parameters
-    ----------
-    footprint_geom : shapely.geometry.Polygon
-        footprint polygon
-    overpass_date : datetime.datetime
-        date from Modis overpass
-    aoi_geom : shapely.geometry.Polygon
-        aoi polygon in WGS coordinates
-    target_date : datetime.datetime
-        date for reference image
-    max_diff_hours : float
-        maximum time difference from reference date
-        in hours
-    """
-    pass
-
-
 def get_best_overpass(
-        parsed_entries, aoi_geom,
-        target_date, max_diff_hours=48):
+        parsed_entries, aoi_geom, target_date,
+        max_diff_hours=48, min_overlap_pct=0.3):
     """Get entry / entries for best overpass
 
     Parameters
@@ -96,6 +70,8 @@ def get_best_overpass(
     max_diff_hours : float
         maximum time difference from reference date
         in hours
+    min_overlap_pct : float
+        minimum overlap
 
     Returns
     -------
@@ -105,6 +81,8 @@ def get_best_overpass(
         sorted list of input parsed_entries
     """
     date_groups = group_entries_by_date(parsed_entries)
+    logger.info('Found entries from %d different dates.', len(date_groups))
+    logger.debug('dates are %s', list(date_groups))
 
     best_date_value = 0
     best_entries = None
@@ -120,14 +98,12 @@ def get_best_overpass(
 
         overlap_values = []
         for e in entries:
-            overlap_values.append(
-                    _value_overlap(
-                        footprint_geom=e['footprint'],
-                        aoi_geom=aoi_geom))
-        if np.sum(overlap_values) > 0:
-            pass
-        else:
-            logger.debug('Skipping date %s (no overlap)', overpass_date)
+            v = _value_overlap(
+                    footprint_geom=e['footprint'],
+                    aoi_geom=aoi_geom)
+            overlap_values.append(v)
+        if np.sum(overlap_values) < min_overlap_pct:
+            logger.debug('Skipping date %s (insufficient overlap)', overpass_date)
             continue
 
         if date_value > best_date_value:

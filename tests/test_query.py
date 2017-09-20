@@ -20,10 +20,9 @@ def test_retrieve_entries():
     assert 'footprint' in e
 
 
-def test_retrieve_entries_all_short_names():
-    entries = query.retrieve_entries_all_short_names(
+def test_retrieve_entries_for_param():
+    entries = query.retrieve_entries_for_param(
+            param_name='ozone',
             also_myd=True,
             **_date_extent)
-    some_short_name = 'MOD05_L2'
-    assert some_short_name in entries
-    assert len(entries[some_short_name]) > 0
+    assert len(entries) > 0
