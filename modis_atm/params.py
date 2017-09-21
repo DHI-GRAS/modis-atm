@@ -64,7 +64,7 @@ def retrieve_parameters(date, extent, credentials, download_dir):
                 infiles=local_files, param_name=param_name, extent=extent)
 
         # convert
-        if param_name in CONVERSION_FACTORS:
+        if dmean is not None and param_name in CONVERSION_FACTORS:
             dmean *= CONVERSION_FACTORS[param_name]
 
         params[param_name] = dmean

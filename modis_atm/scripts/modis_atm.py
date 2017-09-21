@@ -1,6 +1,7 @@
 import shutil
 import tempfile
 import datetime
+import logging
 
 import click
 
@@ -14,18 +15,21 @@ def _get_extent(gdf):
 @click.command()
 @click.argument(
         'shpfile', type=click.Path(file_okay=True))
-@click.argument(
+@click.option(
         '--date', '-d', help='Date string in some reasonable format (default: now)')
-@click.argument(
+@click.option(
         '--username', '-u', required=True, help='EarthData username')
-@click.argument(
+@click.option(
         '--password', '-p', required=True, help='EarthData password')
-@click.argument(
+@click.option(
         '--download-dir', type=click.Path(dir_okay=True), help='Download directory (optional)')
 def main(shpfile, date=None, download_dir=None, **credentials):
+    """Retrieve MODIS atmospheric parameters"""
     import geopandas as gpd
     import dateutil
-    import modis_atm.params
+    from modis_atm import params
+
+    logging.basicConfig(level='DEBUG')
 
     gdf = gpd.read_file(shpfile).to_crs({'init': 'epsg:4326'})
     extent = _get_extent(gdf)
@@ -38,9 +42,9 @@ def main(shpfile, date=None, download_dir=None, **credentials):
     if download_dir is None:
         tempdir = tempfile.mkdtemp()
     try:
-        params = modis_atm.params.retrieve_parameters(
+        kw = params.retrieve_parameters(
                 date, extent, credentials, download_dir=tempdir)
-        click.echo(params)
+        click.echo(kw)
     finally:
         if download_dir is None:
             shutil.rmtree(tempdir)

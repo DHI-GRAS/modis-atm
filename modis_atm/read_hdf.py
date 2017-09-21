@@ -1,3 +1,4 @@
+from __future__ import division
 import os
 import logging
 
@@ -13,7 +14,17 @@ FIELDS = {
         'ozone': 'Total_Ozone'}
 
 
-def get_lon_lat_mask(lon, lat, xmin, xmax, ymin, ymax):
+def get_lon_lat_mask(lon, lat, xmin, xmax, ymin, ymax, do_buffer=True):
+    if do_buffer:
+        nlat, nlon = lat.shape
+        dlon = np.abs(np.diff(lon[nlat//2, :2])) / 2
+        dlat = np.abs(np.diff(lat[:2, nlon//2])) / 2
+        logger.debug('dlon: %f', dlon)
+        logger.debug('dlat: %f', dlat)
+        xmin = xmin - dlon
+        xmax = xmax + dlon
+        ymin = ymin - dlat
+        ymax = ymax + dlat
     mask = (
             (lon >= xmin) & (lon <= xmax) &
             (lat >= ymin) & (lat <= ymax))
