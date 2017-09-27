@@ -43,30 +43,40 @@ def retrieve_parameters(date, extent, credentials, download_dir):
 
     params = {}
     for param_name in param_names:
+        params[param_name] = None
         # query
         logger.info('Finding entries for %s ...', param_name)
         entries = query.retrieve_entries_for_param(param_name, date, extent, also_myd=False)
         logger.info('Total number of entries: %d', len(entries))
 
         # get best entries
-        best_entries = overpass_filter.get_best_overpass(
+        sorted_date_groups = overpass_filter.get_best_overpass(
                 parsed_entries=entries,
                 aoi_geom=aoi_geom,
                 target_date=date)
 
-        # download data for best entries
-        local_files = download.download_entries(
-                best_entries, download_dir, credentials)
+        for overpass_date in sorted_date_groups:
+            logger.info('Using parameters from %s', overpass_date)
+            best_entries = sorted_date_groups[overpass_date]
 
-        # read and merge data
-        logger.info('Using data from %d files', len(local_files))
-        dmean = read_hdf.get_modis_hdf_mean(
-                infiles=local_files, param_name=param_name, extent=extent)
+            # download data for best entries
+            local_files = download.download_entries(
+                    best_entries, download_dir, credentials)
 
-        # convert
-        if dmean is not None and param_name in CONVERSION_FACTORS:
-            dmean *= CONVERSION_FACTORS[param_name]
+            # read and merge data
+            logger.info('Using data from %d files', len(local_files))
+            dmean = read_hdf.get_modis_hdf_mean(
+                    infiles=local_files, param_name=param_name, extent=extent)
 
-        params[param_name] = dmean
+            # convert
+            if dmean is not None and param_name in CONVERSION_FACTORS:
+                dmean *= CONVERSION_FACTORS[param_name]
+
+            if dmean is None:
+                logger.info('Got no data from this date group.')
+                continue
+            else:
+                params[param_name] = dmean
+                break
 
     return params

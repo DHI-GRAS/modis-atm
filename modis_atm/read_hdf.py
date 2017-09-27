@@ -16,11 +16,8 @@ FIELDS = {
 
 def get_lon_lat_mask(lon, lat, xmin, xmax, ymin, ymax, do_buffer=True):
     if do_buffer:
-        nlat, nlon = lat.shape
-        dlon = np.abs(np.diff(lon[nlat//2, :2])) / 2
-        dlat = np.abs(np.diff(lat[:2, nlon//2])) / 2
-        logger.debug('dlon: %f', dlon)
-        logger.debug('dlat: %f', dlat)
+        dlon = 0.001
+        dlat = 0.001
         xmin = xmin - dlon
         xmax = xmax + dlon
         ymin = ymin - dlat
@@ -54,8 +51,11 @@ def get_modis_hdf_sum_count(infile, param_name, extent=None):
     logger.info('Loading file %s field %s', os.path.basename(infile), field_name)
     with xr.open_dataset(infile) as ds:
         data = ds[field_name]
-        if np.isnan(data).all():
+        isnan = np.isnan(data)
+        if isnan.all():
             raise ValueError('Data is all NaN.')
+        nanpct = isnan.sum() / isnan.size
+        logger.debug('Percentage of NaN elements: %f', nanpct)
         if extent is not None:
             lon = ds['Longitude']
             lat = ds['Latitude']

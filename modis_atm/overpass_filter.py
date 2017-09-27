@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from collections import OrderedDict
 
 import numpy as np
 
@@ -41,12 +42,13 @@ def _value_date(overpass_date, target_date, max_diff_hours=48):
         overpass_date = overpass_date.replace(tzinfo=None)
         target_date = target_date.replace(tzinfo=None)
         ddiff = overpass_date - target_date
-    diff_hours = abs(ddiff.total_seconds() / 3600)
+    diff_hours = ddiff.total_seconds() / 3600
     logger.debug('diff_hours: %f', diff_hours)
-    if diff_hours > max_diff_hours:
+    abs_diff_hours = abs(diff_hours)
+    if abs_diff_hours > max_diff_hours:
         return 0.0
     # 1 = perfect match, 0 = bad
-    timepct = (max_diff_hours - diff_hours) / max_diff_hours
+    timepct = (max_diff_hours - abs_diff_hours) / max_diff_hours
     return timepct
 
 
@@ -80,17 +82,14 @@ def get_best_overpass(
 
     Returns
     -------
-    values : list of float
-        value of each entry
-    entries : list of dict
-        sorted list of input parsed_entries
+    OrderedDict datetime.datetime -> list of str
+        sorted date groups of parsed entries
     """
     date_groups = group_entries_by_date(parsed_entries)
     logger.info('Found entries from %d different dates.', len(date_groups))
     logger.debug('dates are %s', list(date_groups))
 
-    best_date_value = 0
-    best_entries = None
+    ranked_entries = []
     for overpass_date in date_groups:
         date_value = _value_date(
                 overpass_date, target_date, max_diff_hours=max_diff_hours)
@@ -111,11 +110,10 @@ def get_best_overpass(
             logger.debug('Skipping date %s (insufficient overlap)', overpass_date)
             continue
 
-        if date_value > best_date_value:
-            best_date_value = date_value
-            best_entries = entries
+        ranked_entries.append((date_value, (overpass_date, entries)))
 
-    if not best_date_value:
-        raise ValueError('No reasonably close overpass among entries.')
+    if not ranked_entries:
+        logger.warn('No reasonably close overpass among entries.')
 
-    return best_entries
+    sorted_date_groups = [e[1] for e in sorted(ranked_entries)[::-1]]
+    return OrderedDict(sorted_date_groups)
