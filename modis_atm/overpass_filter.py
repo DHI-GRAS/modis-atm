@@ -35,8 +35,13 @@ def _value_date(overpass_date, target_date, max_diff_hours=48):
         maximum difference in hours
         larger distance means 0 value
     """
-    overpass_date = overpass_date.replace(tzinfo=None)
-    diff_hours = abs((overpass_date - target_date).total_seconds() / 3600)
+    try:
+        ddiff = overpass_date - target_date
+    except TypeError:
+        overpass_date = overpass_date.replace(tzinfo=None)
+        target_date = target_date.replace(tzinfo=None)
+        ddiff = overpass_date - target_date
+    diff_hours = abs(ddiff.total_seconds() / 3600)
     logger.debug('diff_hours: %f', diff_hours)
     if diff_hours > max_diff_hours:
         return 0.0
