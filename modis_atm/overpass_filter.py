@@ -23,7 +23,7 @@ def group_entries_by_date(parsed_entries):
     return date_groups
 
 
-def _value_date(overpass_date, target_date, max_diff_hours=48):
+def _value_date(overpass_date, target_date, max_diff_hours):
     """Compute value of overpass_date
 
     Parameters

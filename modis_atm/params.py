@@ -14,7 +14,7 @@ CONVERSION_FACTORS = {
         'ozone': 0.001}  # to cm atm
 
 
-def retrieve_parameters(date, extent, credentials, download_dir):
+def retrieve_parameters(date, extent, credentials, download_dir, max_diff_hours=24):
     """Load parameters from MODIS data
 
     Parameters
@@ -29,6 +29,8 @@ def retrieve_parameters(date, extent, credentials, download_dir):
         credentials for EarthData
     download_dir : str
         path to find / save data in
+    max_diff_hours : int
+        maximum difference in hours from target date
 
     Returns
     -------
@@ -46,14 +48,16 @@ def retrieve_parameters(date, extent, credentials, download_dir):
         params[param_name] = None
         # query
         logger.info('Finding entries for %s ...', param_name)
-        entries = query.retrieve_entries_for_param(param_name, date, extent, also_myd=False)
+        entries = query.retrieve_entries_for_param(
+                param_name, date, extent, pad_hours=max_diff_hours, also_myd=False)
         logger.info('Total number of entries: %d', len(entries))
 
         # get best entries
         sorted_date_groups = overpass_filter.get_best_overpass(
                 parsed_entries=entries,
                 aoi_geom=aoi_geom,
-                target_date=date)
+                target_date=date,
+                max_diff_hours=max_diff_hours)
 
         for overpass_date in sorted_date_groups:
             logger.info('Using parameters from %s', overpass_date)

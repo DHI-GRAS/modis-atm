@@ -2,14 +2,14 @@ import datetime
 
 from modis_atm import query
 
-
 _date_extent = dict(
             date=datetime.datetime(2016, 1, 1),
             extent=dict(xmin=10, xmax=13, ymin=54, ymax=56))
 
-
 _query_kw = dict(
-            _date_extent,
+            start_date=datetime.datetime(2016, 1, 1),
+            end_date=datetime.datetime(2016, 1, 2),
+            extent=dict(xmin=10, xmax=13, ymin=54, ymax=56),
             short_name='MOD05_L2')
 
 
