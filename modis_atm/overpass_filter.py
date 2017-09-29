@@ -4,19 +4,15 @@ from collections import OrderedDict
 
 import numpy as np
 
+from modis_atm import utils
+
 logger = logging.getLogger(__name__)
-
-
-def _average_datetime(date1, date2):
-    dt = date2 - date1
-    date = date1 + dt / 2
-    return date
 
 
 def group_entries_by_date(parsed_entries):
     date_groups = defaultdict(list)
     for e in parsed_entries:
-        date = _average_datetime(
+        date = utils.average_datetime(
                 e['start_date'],
                 e['end_date'])
         date_groups[date].append(e)
@@ -36,12 +32,7 @@ def _value_date(overpass_date, target_date, max_diff_hours):
         maximum difference in hours
         larger distance means 0 value
     """
-    try:
-        ddiff = overpass_date - target_date
-    except TypeError:
-        overpass_date = overpass_date.replace(tzinfo=None)
-        target_date = target_date.replace(tzinfo=None)
-        ddiff = overpass_date - target_date
+    ddiff = utils.date_diff(overpass_date, target_date)
     diff_hours = ddiff.total_seconds() / 3600
     logger.debug('diff_hours: %f', diff_hours)
     abs_diff_hours = abs(diff_hours)
@@ -86,7 +77,7 @@ def get_best_overpass(
         sorted date groups of parsed entries
     """
     date_groups = group_entries_by_date(parsed_entries)
-    logger.info('Found entries from %d different dates.', len(date_groups))
+    logger.debug('Found entries from %d different dates.', len(date_groups))
     logger.debug('dates are %s', list(date_groups))
 
     ranked_entries = []

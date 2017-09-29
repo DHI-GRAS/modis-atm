@@ -7,6 +7,7 @@ from modis_atm import query
 from modis_atm import overpass_filter
 from modis_atm import download
 from modis_atm import read_hdf
+from modis_atm import utils
 
 logger = logging.getLogger(__name__)
 
@@ -47,10 +48,10 @@ def retrieve_parameters(date, extent, credentials, download_dir, max_diff_hours=
     for param_name in param_names:
         params[param_name] = None
         # query
-        logger.info('Finding entries for %s ...', param_name)
+        logger.info('Retrieving %s', param_name)
         entries = query.retrieve_entries_for_param(
                 param_name, date, extent, pad_hours=max_diff_hours, also_myd=False)
-        logger.info('Total number of entries: %d', len(entries))
+        logger.debug('Total number of entries: %d', len(entries))
 
         # get best entries
         sorted_date_groups = overpass_filter.get_best_overpass(
@@ -60,7 +61,7 @@ def retrieve_parameters(date, extent, credentials, download_dir, max_diff_hours=
                 max_diff_hours=max_diff_hours)
 
         for overpass_date in sorted_date_groups:
-            logger.info('Using parameters from %s', overpass_date)
+            logger.debug('Trying parameters from %s', overpass_date)
             best_entries = sorted_date_groups[overpass_date]
 
             # download data for best entries
@@ -68,7 +69,7 @@ def retrieve_parameters(date, extent, credentials, download_dir, max_diff_hours=
                     best_entries, download_dir, credentials)
 
             # read and merge data
-            logger.info('Using data from %d files', len(local_files))
+            logger.debug('Using data from %d files', len(local_files))
             dmean = read_hdf.get_modis_hdf_mean(
                     infiles=local_files, param_name=param_name, extent=extent)
 
@@ -77,10 +78,14 @@ def retrieve_parameters(date, extent, credentials, download_dir, max_diff_hours=
                 dmean *= CONVERSION_FACTORS[param_name]
 
             if dmean is None:
-                logger.info('Got no data from this date group.')
+                logger.debug('Got no data from this date group.')
                 continue
             else:
                 params[param_name] = dmean
+                dhours = utils.date_diff(date, overpass_date).total_seconds() // 3600
+                logger.info(
+                        'Found valid data from date %s (dhours is %d)',
+                        overpass_date, dhours)
                 break
 
     return params

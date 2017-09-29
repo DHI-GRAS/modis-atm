@@ -48,7 +48,7 @@ def get_modis_hdf_sum_count(infile, param_name, extent=None):
         inside extent (if provided)
     """
     field_name = FIELDS[param_name]
-    logger.info('Loading file %s field %s', os.path.basename(infile), field_name)
+    logger.debug('Loading file %s field %s', os.path.basename(infile), field_name)
     with xr.open_dataset(infile) as ds:
         data = ds[field_name]
         isnan = np.isnan(data)
@@ -104,7 +104,7 @@ def get_modis_hdf_mean(infiles, param_name, extent=None):
         dsum_total += dsum
         dcount_total += dcount
 
-    logger.info('Total number of pixels in mean: %d', dcount_total)
+    logger.debug('Total number of pixels in mean: %d', dcount_total)
     if dcount_total == 0:
         dmean = None
     else:
