@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='modis_atm',
-    version='0.1.3',
+    version='0.2',
     description='Get atmospheric parameters from MODIS',
     author='Jonas Solvsteen',
     author_email='josl@dhi-gras.com',
