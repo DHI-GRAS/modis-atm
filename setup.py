@@ -13,6 +13,7 @@ setup(
     modis_atm=modis_atm.scripts.modis_atm:main
     """,
     install_requires=[
-        'earthdata_download>=0.7'],
+        'earthdata_download>=0.7',
+        'ftputil'],
     dependency_links=[
         'https://github.com/DHI-GRAS/earthdata_download/archive/v0.7.zip#egg=earthdata_download-0.7'])

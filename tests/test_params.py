@@ -29,6 +29,5 @@ def test_retrieve_parameters():
                 **_date_extent)
     finally:
         shutil.rmtree(tempdir)
-
     assert 'ozone' in parameters
     assert isinstance(parameters['AOT'], float)
