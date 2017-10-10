@@ -87,5 +87,6 @@ def retrieve_parameters(date, extent, credentials, download_dir, max_diff_hours=
                         'Found valid data from date %s (dhours is %d)',
                         overpass_date, dhours)
                 break
+            logger.info('Found no valid data in %d overpasses.', len(sorted_date_groups))
 
     return params
