@@ -41,10 +41,6 @@ def download_file_https(url, target, username, password):
         response.raise_for_status()
         with open(target, "wb") as target_file:
             shutil.copyfileobj(response.raw, target_file)
-    logger.info("Saved file {local_filename} ({local_filesize:d})".format(
-        local_filename=target,
-        local_filesize=os.path.getsize(target)))
-    return target
 
 
 def _hostname_path_from_url(url):
