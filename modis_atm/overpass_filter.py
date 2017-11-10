@@ -2,8 +2,6 @@ import logging
 from collections import defaultdict
 from collections import OrderedDict
 
-import numpy as np
-
 from modis_atm import utils
 
 logger = logging.getLogger(__name__)
@@ -97,7 +95,7 @@ def get_best_overpass(
                     footprint_geom=e['footprint'],
                     aoi_geom=aoi_geom)
             overlap_values.append(v)
-        if np.sum(overlap_values) < min_overlap_pct:
+        if sum(overlap_values) < min_overlap_pct:
             logger.debug('Skipping date %s (insufficient overlap)', overpass_date)
             continue
 
