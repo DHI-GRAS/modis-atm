@@ -5,7 +5,10 @@ import datetime
 
 import pytest
 
-from modis_atm import params
+try:
+    from modis_atm import params
+except ImportError:
+    pytestmark = pytest.mark.skip(reason='numpy, scipy, or xarray not installed')
 
 
 auth = dict(
