@@ -1,7 +1,10 @@
 import pytest
-import numpy as np
 
-from modis_atm import read_hdf
+try:
+    import numpy as np
+    from modis_atm import read_hdf
+except ImportError:
+    pytestmark = pytest.mark.skip(reason='numpy, scipy, or xarray not installed')
 
 try:
     import modis_atm_data
