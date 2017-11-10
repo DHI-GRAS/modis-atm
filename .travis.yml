@@ -15,10 +15,10 @@ install:
   - conda config --add channels conda-forge
   - conda update -q conda
   - conda install numpy scipy xarray
-  - pip install codecov
+  - pip install pytest codecov
   - pip install -r requirements.txt
   - pip install -e .[test]
 script:
-  - coverage run --source=modis_atm -m py.test -v
+  - coverage run --source=modis_atm -m pytest -v
 after_success:
   - codecov
